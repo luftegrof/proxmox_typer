@@ -1,9 +1,13 @@
-#!/bin/bash -xv
+#!/bin/bash
+#
+# Copyright 2021, luftegrof at duck dot com
+#
+# Licensed under GPL Version 3
+# See LICENSE file for info.
 #
 # Requires: 
-# websocat v1.8.0
-# vncdotool v0.12.0
-# 
+# websocat v1.8.0 | https://github.com/vi/websocat
+# vncdotool v0.12.0 | https://github.com/sibson/vncdotool
 
 debug="false"
 
@@ -39,9 +43,6 @@ else
 fi
 
 init=$(curl "https://${proxmox_server}:${proxmox_port}/api2/extjs/access/ticket" \
-  -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
-  -H "Origin: https://${proxmox_server}:${proxmox_port}" \
-  -H "Referer: https://${proxmox_server}:${proxmox_port}/" \
   --data-raw "username=${username}&password=${password_enc}&realm=${realm}" \
   --compressed \
   --silent \
