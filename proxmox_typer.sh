@@ -8,12 +8,19 @@
 # Requires: 
 # websocat v1.8.0 | https://github.com/vi/websocat
 # vncdotool v0.12.0 | https://github.com/sibson/vncdotool
+#
+# This program will type out the file you specify in the configuration
+# on the noVNC console of a Virtual Machine (VM) on Proxmox.
 
+# Set to "true" to enable output of variables to the terminal.
 debug="false"
 
+# Parse the configuration file
 config_file="./proxmox_typer.conf"
 source ${config_file}
 
+# Prompt for the username, password, and realm.
+# Perform very basic input validation.
 echo -n "Proxmox Username: "
 read username
 if [ -n ${username} ]; then
@@ -41,6 +48,9 @@ else
 	exit 1
 fi
 
+# Initialize the Proxmox connection:
+# * Get an authentication cookie
+# * Get a CSRF token
 init=$(curl "https://${proxmox_server}:${proxmox_port}/api2/extjs/access/ticket" \
   --data-raw "username=${username}&password=${password_enc}&realm=${realm}" \
   --compressed \
@@ -71,6 +81,9 @@ else
 	exit 1
 fi
 
+# Initialize the Websocket with the Proxmox VNC proxy:
+# * Get the VNC port (usually 5900)
+# * Get a VNC ticket (will be the VNC console password)
 vncproxy=$(curl https://${proxmox_server}:${proxmox_port}/api2/json/nodes/${proxmox_node}/qemu/${vmid}/vncproxy \
   -H "CSRFPreventionToken: ${proxmox_csrf_token}" \
   -H "Cookie: PVEAuthCookie=${proxmox_authn_cookie_enc}" \
@@ -87,15 +100,20 @@ if [ "${debug}" == "true" ]; then
 	echo ${vnc_ticket_enc}
 fi
 
+# Initialize a TCP to Websocket bridge.
+# * Listen on a local TCP port.
+# * Forward traffic sent to the local TCP port through the Websocket to the remote host.
 /usr/bin/websocat -k -b \
   -H="Cookie: PVEAuthCookie=${proxmox_authn_cookie_enc}" \
   "tcp-l:${wsproxy_addr}:${wsproxy_port}" \
   "wss://${proxmox_server}:${proxmox_port}/api2/json/nodes/${proxmox_node}/qemu/${vmid}/vncwebsocket?port=${vnc_port}&vncticket=${vnc_ticket_enc}" &
 
+# Initialize a noVNC session and interface with the noVNC console of the desired VM.
 vncdo --force-caps \
   --delay=40 \
   -s ${wsproxy_addr}::${wsproxy_port} \
   -p ${vnc_ticket} \
   typefile ${type_file}
 
+# Clean up after we're done.
 kill `pidof websocat`
