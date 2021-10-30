@@ -8,6 +8,7 @@
 # Requires: 
 # websocat v1.8.0 | https://github.com/vi/websocat
 # vncdotool v0.12.0 | https://github.com/sibson/vncdotool
+# php (for urlencode feature)
 #
 # This program will type out the file you specify in the configuration
 # on the noVNC console of a Virtual Machine (VM) on Proxmox.
