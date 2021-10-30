@@ -14,7 +14,6 @@ debug="false"
 config_file="./proxmox_typer.conf"
 source ${config_file}
 
-
 echo -n "Proxmox Username: "
 read username
 if [ -n ${username} ]; then
@@ -89,10 +88,14 @@ if [ "${debug}" == "true" ]; then
 fi
 
 /usr/bin/websocat -k -b \
-	-H="Cookie: PVEAuthCookie=${proxmox_authn_cookie_enc}" \
-	"tcp-l:${wsproxy_addr}:${wsproxy_port}" \
-	"wss://${proxmox_server}:${proxmox_port}/api2/json/nodes/${proxmox_node}/qemu/${vmid}/vncwebsocket?port=${vnc_port}&vncticket=${vnc_ticket_enc}" &
+  -H="Cookie: PVEAuthCookie=${proxmox_authn_cookie_enc}" \
+  "tcp-l:${wsproxy_addr}:${wsproxy_port}" \
+  "wss://${proxmox_server}:${proxmox_port}/api2/json/nodes/${proxmox_node}/qemu/${vmid}/vncwebsocket?port=${vnc_port}&vncticket=${vnc_ticket_enc}" &
 
-vncdo --force-caps --delay=40 -s ${wsproxy_addr}::${wsproxy_port} -p ${vnc_ticket} typefile mydash.b64
+vncdo --force-caps \
+  --delay=40 \
+  -s ${wsproxy_addr}::${wsproxy_port} \
+  -p ${vnc_ticket} \
+  typefile ${type_file}
 
 kill `pidof websocat`
